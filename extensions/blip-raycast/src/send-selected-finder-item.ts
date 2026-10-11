@@ -1,22 +1,30 @@
-import { closeMainWindow, popToRoot, showHUD, showToast, Toast } from "@raycast/api";
-import { sendPathToBlip } from "./blip";
-import { getFirstSelectedFilePath } from "./finder";
-import { fileManagerName } from "./platform";
+import {
+  Toast,
+  popToRoot,
+  getSelectedFinderItems,
+  showHUD,
+  showToast,
+} from "@raycast/api";
+import { hideRaycastForHandoff, prepareTransfer } from "./lib/blip";
 
-export default async function command() {
+export default async function Command() {
   try {
-    await closeMainWindow();
-    const path = await getFirstSelectedFilePath();
-    await sendPathToBlip(path);
+    const items = await getSelectedFinderItems();
+    if (!items.length)
+      throw new Error("Select one or more files or folders in Finder first.");
+    const count = await prepareTransfer(
+      items.map((item) => item.path),
+      hideRaycastForHandoff,
+    );
+    await showHUD(
+      `Opened Blip with ${count} ${count === 1 ? "item" : "items"} — choose a recipient`,
+    );
     await popToRoot();
-    await showHUD("Sent to Blip");
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : `Unable to send the selected ${fileManagerName} item to Blip.`;
     await showToast({
       style: Toast.Style.Failure,
-      title: "Blip send failed",
-      message,
+      title: "Could not prepare transfer",
+      message: error instanceof Error ? error.message : String(error),
     });
   }
 }

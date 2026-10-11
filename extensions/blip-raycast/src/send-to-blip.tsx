@@ -1,85 +1,96 @@
-import { Action, ActionPanel, Form, Icon, Toast, showToast } from "@raycast/api";
-import { useEffect, useState } from "react";
-import { sendPathToBlip } from "./blip";
-import { getFirstSelectedFilePath } from "./finder";
-import { fileManagerName, isMac } from "./platform";
-
-type Values = {
-  path: string[];
-};
+import {
+  Action,
+  ActionPanel,
+  Form,
+  Icon,
+  Toast,
+  popToRoot,
+  getSelectedFinderItems,
+  showHUD,
+  showToast,
+} from "@raycast/api";
+import { useEffect, useRef, useState } from "react";
+import { hideRaycastForHandoff, prepareTransfer } from "./lib/blip";
 
 export default function Command() {
-  const [selectedPaths, setSelectedPaths] = useState<string[]>([]);
+  const [paths, setPaths] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string>();
+  const submitting = useRef(false);
 
   useEffect(() => {
-    let isMounted = true;
-
-    async function loadSelection() {
-      try {
-        const path = await getFirstSelectedFilePath();
-        if (isMounted) {
-          setSelectedPaths([path]);
-        }
-      } catch {
-        // File manager selection is optional for this command.
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
-    }
-
-    loadSelection();
-
+    let active = true;
+    getSelectedFinderItems()
+      .then((items) => {
+        if (active) setPaths(items.map((item) => item.path));
+      })
+      .catch(() => {
+        // Finder selection is optional; the file picker remains available.
+      })
+      .finally(() => {
+        if (active) setIsLoading(false);
+      });
     return () => {
-      isMounted = false;
+      active = false;
     };
   }, []);
 
-  async function handleSubmit(values: Values) {
-    const path = values.path[0];
-
+  async function submit(values: { paths: string[] }) {
+    if (submitting.current) return;
+    if (!values.paths.length) {
+      setError("Choose at least one file or folder.");
+      return;
+    }
+    submitting.current = true;
+    let toast: Toast | undefined;
     try {
-      await sendPathToBlip(path);
-      await showToast({
-        style: Toast.Style.Success,
-        title: "Sent to Blip",
+      toast = await showToast({
+        style: Toast.Style.Animated,
+        title: "Preparing in Blip",
       });
+      const count = await prepareTransfer(values.paths, hideRaycastForHandoff);
+      await toast.hide();
+      await showHUD(
+        `Opened Blip with ${count} ${count === 1 ? "item" : "items"} — choose a recipient`,
+      );
+      await popToRoot();
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Unable to send the selected file to Blip.";
-      await showToast({
-        style: Toast.Style.Failure,
-        title: "Blip send failed",
-        message,
-      });
+      if (toast) {
+        toast.style = Toast.Style.Failure;
+        toast.title = "Could not prepare transfer";
+        toast.message = error instanceof Error ? error.message : String(error);
+      }
+    } finally {
+      submitting.current = false;
     }
   }
-
-  const servicesDescription = isMac
-    ? "Raycast needs Accessibility permission to trigger Blip's Finder Services action."
-    : "Raycast needs Accessibility permission to trigger Blip's context menu action.";
 
   return (
     <Form
       isLoading={isLoading}
       actions={
         <ActionPanel>
-          <Action.SubmitForm title="Send to Blip" onSubmit={handleSubmit} icon={Icon.Upload} />
+          <Action.SubmitForm
+            title="Prepare in Blip"
+            icon={Icon.Upload}
+            onSubmit={submit}
+          />
         </ActionPanel>
       }
     >
-      <Form.Description
-        text={`Choose a file or folder to send. If ${fileManagerName} has a current selection, it will appear here automatically. ${servicesDescription}`}
-      />
+      <Form.Description text="Choose files and folders together. Blip opens its recipient picker with your selection; you choose who receives it in Blip." />
       <Form.FilePicker
-        id="path"
-        title="File or Folder"
-        value={selectedPaths}
-        onChange={setSelectedPaths}
-        allowMultipleSelection={false}
-        canChooseDirectories
+        id="paths"
+        title="Files and Folders"
+        value={paths}
+        onChange={(value) => {
+          setPaths(value);
+          setError(undefined);
+        }}
+        error={error}
+        allowMultipleSelection
         canChooseFiles
+        canChooseDirectories
       />
     </Form>
   );

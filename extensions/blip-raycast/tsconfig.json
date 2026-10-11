@@ -1,15 +1,14 @@
 {
   "compilerOptions": {
-    "target": "ES2022",
+    "lib": ["ES2023"],
     "module": "commonjs",
-    "lib": ["ES2022"],
+    "target": "ES2022",
     "jsx": "react-jsx",
-    "moduleResolution": "node",
-    "esModuleInterop": true,
     "strict": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "types": ["node"]
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx"]
+  "include": ["src/**/*", "raycast-env.d.ts"],
+  "exclude": ["node_modules", "tests"]
 }
