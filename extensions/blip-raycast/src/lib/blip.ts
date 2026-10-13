@@ -8,6 +8,7 @@ import {
   getApplications,
 } from "@raycast/api";
 import { validatePaths } from "./paths";
+import { SettingsFailure, settingsFailure } from "./settings-errors";
 
 const execFileAsync = promisify(execFile);
 
@@ -87,24 +88,17 @@ export async function openSettings(
   pane: SettingsPane,
   beforeHandoff?: () => Promise<void>,
 ): Promise<void> {
-  await requireBlip();
-  await beforeHandoff?.();
   try {
+    await requireBlip();
+    await beforeHandoff?.();
     const { stdout } = await execFileAsync(
       "/usr/bin/osascript",
       [join(environment.assetsPath, "open-settings.applescript"), pane],
       { timeout: 15000, maxBuffer: 65536 },
     );
-    if (stdout.trim() !== pane)
-      throw new Error("Blip did not open the requested settings pane.");
+    if (stdout.trim() !== pane) throw new SettingsFailure("pane_not_confirmed");
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown error.";
-    throw new Error(
-      automationError(
-        message,
-        "Could not reach Blip Settings. Close unfinished transfer windows, open Blip's menu-bar panel, and try again.",
-      ),
-    );
+    throw settingsFailure(error);
   }
 }
 

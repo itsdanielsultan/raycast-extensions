@@ -9,8 +9,20 @@ export default function Command() {
   const { library, error, isLoading, refresh } = useLibrary();
   const [query, setQuery] = useState("");
   const [tag, setTag] = useState("");
-  if (error) return <LibraryProblem error={error} />;
+  if (error) return <LibraryProblem error={error} onRetry={refresh} />;
   const notes = library?.notes ?? [];
+  if (!isLoading && !notes.length && (library?.skipped || library?.limited)) {
+    return (
+      <LibraryProblem
+        error={
+          new Error(
+            "The selected folder could not be fully read. Some entries were unreadable, oversized, or outside the search limits, so this scan cannot confirm that no Cleft exports exist. Check the selected folder and retry.",
+          )
+        }
+        onRetry={refresh}
+      />
+    );
+  }
   const matches = searchNotes(notes, query, tag);
   const tags = Array.from(new Set(notes.flatMap((note) => note.tags))).sort(
     (a, b) => a.localeCompare(b),

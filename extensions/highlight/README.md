@@ -6,6 +6,8 @@ Open Highlight's native search, start a new chat, or open its task composer thro
 
 Requires Highlight AI's **Highlight.app**, an already signed-in account, its visible assistant panel, default hotkeys, and Raycast's macOS Automation/Accessibility permissions. Configure the app path if necessary. Highlights (the PDF reader) and Black Highlighter are different apps.
 
+The identity guard requires the confirmed bundle ID `tv.medal.highlight`, bundle name `Highlight`, and executable `Highlight`. An official download candidate for version 1.3.284 on Apple silicon has matching metadata. Installer inspection, sign-in, native controls, and actual Raycast execution remain separate verification steps; no working-control claim is made for that candidate yet.
+
 This integration controls Highlight's native UI; it does not expose a remote API, search results inside Raycast, or background capture. A shortcut request is acknowledged as a shortcut request, never as a completed task or search result. Commands fail before typing if the identified Highlight process is not running with a window, or if it loses foreground focus. The extension sends no text, files, credentials, or network requests.
 
 ## Commands

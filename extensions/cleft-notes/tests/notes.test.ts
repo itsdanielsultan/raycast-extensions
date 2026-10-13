@@ -1,5 +1,12 @@
 import assert from "node:assert/strict";
-import { mkdtemp, mkdir, rm, symlink, writeFile } from "node:fs/promises";
+import {
+  mkdtemp,
+  mkdir,
+  realpath,
+  rm,
+  symlink,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -7,6 +14,7 @@ import {
   MAX_FILE_BYTES,
   parseNote,
   readLibrary,
+  resolveSyncFolder,
   searchNotes,
 } from "../src/lib/notes.ts";
 
@@ -93,13 +101,15 @@ test("file integration finds Cleft exports recursively, orders latest creation f
     await writeFile(join(root, "outside.md"), sample(99));
     await symlink(join(root, "outside.md"), join(exports, "linked.md"));
     const result = await readLibrary(exports);
+    const canonicalExports = await realpath(exports);
+    assert.equal(result.folder, canonicalExports);
     assert.deepEqual(
       result.notes.map((note) => note.id),
       ["2", "1"],
     );
     assert.equal(
       result.notes[0].audioPath,
-      join(exports, "nested", "latest.m4a"),
+      join(canonicalExports, "nested", "latest.m4a"),
     );
     assert.equal(result.skipped, 1);
     assert.equal(result.limited, false);
@@ -118,4 +128,27 @@ test("a missing export folder produces a failure instead of empty success", asyn
     ),
     { code: "ENOENT" },
   );
+});
+
+test("an explicit directory preference selects that folder and never falls back when it is missing or invalid", async () => {
+  const root = await mkdtemp(
+    join(process.env.CLEFT_TEST_TEMP || tmpdir(), "cleft-folder-test-"),
+  );
+  try {
+    const selected = join(root, "Selected Folder");
+    await mkdir(selected);
+    assert.equal(await resolveSyncFolder(`  ${selected}  `), selected);
+    await assert.rejects(
+      resolveSyncFolder(join(root, "missing")),
+      /Choose your Cleft Local Sync folder/,
+    );
+    const file = join(root, "not-a-directory.md");
+    await writeFile(file, sample());
+    await assert.rejects(
+      resolveSyncFolder(file),
+      /Choose your Cleft Local Sync folder/,
+    );
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
 });

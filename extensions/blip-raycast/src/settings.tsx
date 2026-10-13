@@ -3,8 +3,11 @@ import {
   ActionPanel,
   Icon,
   List,
+  PopToRootType,
   Toast,
+  environment,
   popToRoot,
+  showHUD,
   showToast,
 } from "@raycast/api";
 import {
@@ -13,6 +16,7 @@ import {
   type SettingsPane,
 } from "./lib/blip";
 import { useRef } from "react";
+import { settingsFailure } from "./lib/settings-errors";
 
 const panes: { name: SettingsPane; subtitle: string; icon: Icon }[] = [
   {
@@ -48,11 +52,14 @@ export default function Command() {
       await toast.hide();
       await popToRoot();
     } catch (error) {
-      if (toast) {
-        toast.style = Toast.Style.Failure;
-        toast.title = "Could not open Blip settings";
-        toast.message = error instanceof Error ? error.message : String(error);
+      const failure = settingsFailure(error);
+      await toast?.hide().catch(() => undefined);
+      if (environment.isDevelopment) {
+        console.warn("Blip Settings failed", { reason: failure.kind });
       }
+      await showHUD(failure.message, {
+        popToRootType: PopToRootType.Suspended,
+      });
     } finally {
       opening.current = false;
     }

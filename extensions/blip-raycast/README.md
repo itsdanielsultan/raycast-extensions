@@ -1,6 +1,6 @@
 # Blip
 
-Mac development candidate for the existing `blip-raycast` package. It prepares complete file batches in Blip and navigates its settings panes from Raycast. The automated checks pass; the final native-helper and Raycast workflows remain unverified. See [TESTING.md](TESTING.md) before relying on this package.
+Mac development candidate for the existing `blip-raycast` package. It prepares file batches in Blip and navigates its settings panes from Raycast. The automated checks pass. Actual Raycast checks passed for single-file and file/folder preparation, the Finder-selection command, and the existing-picker guard. The previous settings helper passed all four panes with Settings already open, but hidden startup timed out twice. A new bounded settings helper is statically checked and still requires live verification. See [TESTING.md](TESTING.md) before relying on this package.
 
 | Command                          | Behavior                                                                           |
 | -------------------------------- | ---------------------------------------------------------------------------------- |
@@ -20,13 +20,13 @@ Mac development candidate for the existing `blip-raycast` package. It prepares c
 
 The extension reveals and selects your chosen items in Finder, checks that every item remains selected, and invokes Blip's installed **Blip…** Service. Finder selection changes as part of this handoff. If Finder cannot retain the complete batch, put the items in one folder or select them together in Finder and try again.
 
-The helper waits for Blip's picker to become ready before reporting success. If a matching picker is already open, finish or close it before starting another preparation. A picker stuck at **Resolving items…** is treated as a failure.
+The helper currently uses a matching picker title and an enabled text field as a readiness heuristic. Live fixture checks showed the expected resolved file/folder items and enabled recipient search field. The implementation still uses a generic title/text-field heuristic rather than identifying those fields directly. If a matching picker is already open, finish or close it before starting another preparation. See the live-test limits in [TESTING.md](TESTING.md).
 
 You choose the recipient and complete the transfer in Blip. These commands do not choose recipients or send automatically.
 
 ## Settings
 
-The settings command targets Blip's actual Settings gear/menu and toolbar through macOS Accessibility. It opens the requested pane without changing preferences. Its supported panes are General, Devices, Profile, and Help. It does not use guessed URL routes or private APIs.
+The settings command targets Blip's actual Settings gear/menu and toolbar through macOS Accessibility. The previous helper passed General, Devices, Profile, and Help with Settings already open. Its hidden-startup path exceeded the subprocess limit. The new helper uses shallow, scoped queries around the observed Settings gear/menu, with per-query and overall limits; it remains unverified in the app. Until verified, open Blip’s Settings gear → Settings… manually. Failure reasons are sanitized; development diagnostics record only a fixed key. A visible failure HUD has not yet been independently captured. It does not use guessed URL routes or private APIs.
 
 ## Development
 

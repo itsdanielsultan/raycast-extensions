@@ -45,19 +45,27 @@ The first scan attempt used a custom mount point under the scratch directory and
 
 No user files were deleted, caches reclaimed, apps uninstalled, administrator helper installed, or additional permissions granted. There was no external transmission, publication, or email.
 
-## Actual Raycast workflow pending
+## Actual Raycast representative workflows
 
-`ray develop` successfully compiled the extension and submitted its development import. That output does not prove the live commands are registered, that Raycast's `getApplications()` recognizes the mounted app, or that its worker has Automation/Accessibility permission. The development process was stopped after testing; rerun `npm run dev` before retrying the native Raycast workflow.
+On October 13, 2026, the verified official app was available in Applications and the frozen development package was imported during an exclusive test window. Native Raycast displayed all three commands.
 
-Raycast's native interface was unavailable for an independent extension test during the verification session. Testing must use native Raycast search; browser-based invocation was unavailable because the browser security policy permits only HTTP and HTTPS.
+Passed with a disposable 8 MiB verification volume:
 
-Required remaining checks, when Raycast's native interface is available:
+- Before scanning, **Show Largest Files** displayed the actual Raycast failure HUD with actionable unavailable-state guidance.
+- **Show Largest Files** changed the completed fixture scan from List to Largest and displayed the known disposable file paths.
+- **Control Sunflower** displayed its searchable list; **Show List** changed Largest back to List.
+- After adding a synthetic marker to the fixture, **Rescan Disk** made the marker appear in the live scan. This confirmed a fresh scan beyond menu acknowledgment.
 
-1. Open Control Sunflower through native Raycast search and verify the searchable control list.
-2. Run all controls and both direct commands from Raycast against the disposable volume. Verify the worker identifies the correct app, executes the native script, and reports success only after an acknowledged menu action.
-3. Run a disabled action before a scan/selection and verify Raycast shows the intended actionable failure.
-4. If macOS asks for Automation or Accessibility permission, obtain user assistance for that specific permission; do not change it through hidden settings. Verify the missing-permission message where practical.
+The volume initially mounted with `-nobrowse` was omitted from the app's disk list. A plain `hdiutil attach` mount followed by **File → New Window** displayed the verification volume. Only that explicitly labelled disk was selected. The user disk's scan button and Full Disk Access control were not used.
+
+The two extra test windows were closed with observed app controls, the original Ready to Scan window was preserved, the synthetic marker was moved to private recovery, the fixture volume was ejected, and the development process was stopped. Raycast returned to empty root search. No user file, clipboard, or new permission was changed.
+
+All three entry points have representative real-worker proof. Still required before a complete working release:
+
+1. Run the remaining individual view, navigation, Quick Look and Reveal controls from Raycast against the disposable volume; native mapping tests alone do not prove every Raycast action.
+2. Verify missing-app and permission-recovery behavior, obtaining user assistance for any specific new security prompt.
+3. Exercise immediate Pop to Root behavior and confirm the suspended worker completes the handoff.
 
 ## Release gate
 
-**Not fully verified.** Automated checks and native menu behavior passed; actual Raycast worker workflows remain pending. Publication does not change this verification status.
+**Not fully verified.** Automated checks, native menu behavior, and representative Raycast workflows passed; remaining individual controls and recovery cases are pending. Publication does not change this verification status.

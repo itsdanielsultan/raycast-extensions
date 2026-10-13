@@ -59,7 +59,8 @@ on run filePaths
       end repeat
     end tell
     if not didInvokeService then error "BLIP_SERVICE_NOT_FOUND"
-    repeat 150 times
+    set readinessDeadline to (current date) + 15
+    repeat while (current date) < readinessDeadline
       if exists process "Blip" then
         tell process "Blip"
           if exists window 1 then
